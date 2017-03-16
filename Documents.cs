@@ -1,5 +1,5 @@
 ﻿using EncompassREST.Data;
-using EncompassREST.LoanDocs;
+//using EncompassREST.LoanDocs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -26,14 +26,14 @@ namespace EncompassREST
 
         }
 
-        public async Task<List<Document>> getDocumentsListAsync()
+        public async Task<List<LoanDocs.Document>> getDocumentsListAsync()
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, string.Format("loans/{0}/documents", _loan.encompassId));
 
             var response = await Session.RESTClient.SendAsync(message);
             if (response.IsSuccessStatusCode)
             {
-                return JsonConvert.DeserializeObject<List<Document>>(await response.Content.ReadAsStringAsync());
+                return JsonConvert.DeserializeObject<List<LoanDocs.Document>>(await response.Content.ReadAsStringAsync());
             }
             else
             {
@@ -42,13 +42,13 @@ namespace EncompassREST
 
         }
 
-        public async Task<Document> getDocumentAsync(string DocumentID)
+        public async Task<LoanDocs.Document> getDocumentAsync(string DocumentID)
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, string.Format("loans/{0}/documents/{1}", _loan.encompassId,DocumentID));
             var response = await Session.RESTClient.SendAsync(message);
             if (response.IsSuccessStatusCode)
             {
-                return JsonConvert.DeserializeObject<Document>(await response.Content.ReadAsStringAsync());
+                return JsonConvert.DeserializeObject<LoanDocs.Document>(await response.Content.ReadAsStringAsync());
             }
             else
             {
@@ -56,13 +56,13 @@ namespace EncompassREST
             }
         }
 
-        public async Task<List<Attachment>> getDocumentAttachmentListAsync(string DocumentID)
+        public async Task<List<LoanDocs.Attachment>> getDocumentAttachmentListAsync(string DocumentID)
         {
             HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, string.Format("loans/{0}/documents/{1}/attachments", _loan.encompassId, DocumentID));
             var response = await Session.RESTClient.SendAsync(message);
             if (response.IsSuccessStatusCode)
             {
-                return JsonConvert.DeserializeObject<List<Attachment>>(await response.Content.ReadAsStringAsync());
+                return JsonConvert.DeserializeObject<List<LoanDocs.Attachment>>(await response.Content.ReadAsStringAsync());
             }
             else
             {
@@ -70,7 +70,7 @@ namespace EncompassREST
             }
         }
 
-        public async Task<Document> postDocument(string title,string applicationId = "All")
+        public async Task<LoanDocs.Document> postDocumentAsync(string title,string applicationId = "All")
         {
             var newDoc = new
             {
@@ -99,14 +99,40 @@ namespace EncompassREST
         }
 
 
-        public async Task<string> getDownloadUrlAsync(Attachment attachment)
+        public async Task<List<eFolderAttachments.Attachment>> getAttachmentListAsync(Loan loan)
         {
-            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, string.Format("loans/{0}/attachments/{1}/url", _loan.encompassId,attachment.entityId));
+            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, string.Format("loans/{0}/attachments", _loan.encompassId));
             var response = await Session.RESTClient.SendAsync(message);
 
             if (response.IsSuccessStatusCode)
             {
-                var mu = JsonConvert.DeserializeObject<MediaURL>(await response.Content.ReadAsStringAsync());
+                var mu = JsonConvert.DeserializeObject<List<eFolderAttachments.Attachment>>(await response.Content.ReadAsStringAsync());
+                return mu;
+            }
+            else
+            {
+                throw new EncompassREST.Exceptions.RESTException("getAttachmentListAsync", response);
+            }
+        }
+
+
+
+        public async Task<string> getDownloadUrlAsync(eFolderAttachments.Attachment attachment)
+        {
+            string attachmentID;
+
+
+            if (attachment.attachmentType == 1)
+                attachmentID = attachment.pages.First().zipKey;
+            else
+                attachmentID = attachment.attachmentId;
+
+            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, string.Format("loans/{0}/attachments/{1}/url", _loan.encompassId,attachmentID));
+            var response = await Session.RESTClient.SendAsync(message);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var mu = JsonConvert.DeserializeObject<LoanDocs.MediaURL>(await response.Content.ReadAsStringAsync());
                 return mu.mediaUrl;
             }
             else
