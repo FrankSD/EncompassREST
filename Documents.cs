@@ -99,9 +99,25 @@ namespace EncompassREST
         }
 
 
+        public async Task<eFolderAttachments.Attachment> getAttachmentAsync(Loan loan, string AttachmentID)
+        {
+            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, string.Format("loans/{0}/attachments/{1}", _loan.encompassId, AttachmentID));
+            var response = await Session.RESTClient.SendAsync(message);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var mu = JsonConvert.DeserializeObject<eFolderAttachments.Attachment>(await response.Content.ReadAsStringAsync());
+                return mu;
+            }
+            else
+            {
+                throw new EncompassREST.Exceptions.RESTException("getAttachmentAsync", response);
+            }
+        }
+
         public async Task<List<eFolderAttachments.Attachment>> getAttachmentListAsync(Loan loan)
         {
-            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Post, string.Format("loans/{0}/attachments", _loan.encompassId));
+            HttpRequestMessage message = new HttpRequestMessage(HttpMethod.Get, string.Format("loans/{0}/attachments", _loan.encompassId));
             var response = await Session.RESTClient.SendAsync(message);
 
             if (response.IsSuccessStatusCode)
